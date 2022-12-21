@@ -1,0 +1,102 @@
+#compdef phint
+
+
+getcmd() {
+    echo $@ | sed -e "s/\\\/\\\\\\\/g;s/\\\:/:/g"
+}
+
+function _block() {
+    _blocks=$(cat <<-'EOF'
+sudo blockdev --report:[Block] - Print report for block devices
+sudo blkid _dev_ -D  --match-tag UUID -o value:[Filesystem] - Get _dev_ UUID value
+debugfs -R "stat _dest_" _dev_ | grep -o "Flags\:.*":[Filesystem] - Get stats of _dest_ from _dev_ (Can get options even if it is mounted from any mount command)
+sudo losetup -a:[Loop] - Print loop device status
+sudo dmsetup ls --tree --table devname -o blkdevname,compact:[Mapper] - Print dm deps in each line
+sudo dmsetup ls --tree --table devname -o blkdevname,compact | grep $(mount | awk '/on \/ / {n=split($1,a,"/"); print a[n]}') | awk '{print $(NF-1)}' | tr -d "<>":[Mapper] - Get devname of encrypted root partition
+EOF
+)
+    local -a _blockargs=("${(@f)$(getcmd $_block)}")
+    _describe -t block 'Block - nvme - mapper related' _blockargs
+    _evalarg=
+    return 0
+}
+
+function _str.h() {
+    _str_h=$(cat <<'EOF'
+| sed 's/^[[\:blank\:]]*//;s/[[\:blank\:]]*$//':[Pipe] - Remove trailing spaces from string
+| sed '/^_match_/s/^/_prefix_/':[Pipe] - Insert _prefix_ before _match_
+_var_="(${$(echo -n _str_ | tr -t -C '!' '[\\0*]' | xxd -c 1 -d -a | awk -F\: '/21/ {print $1}')})":[Array] - Split _str_ to numerical array
+_arr_="${(@f)$_str_}":[Array] - Split _str_ by newline to array _arr_ (IFS seperated)
+_arr_="${(s._delim_.)_str_}":[Array] - Split _str_ by _delim_
+EOF
+)
+    local -a _strargs=("${(@f)$(getcmd $_str_h)}")
+    _describe -t strings 'string manipulation' _strargs
+    _evalarg=
+    return 0
+}
+
+function _kernel() {
+    _kern=$(cat <<'EOF'
+grep --text -m 1 "video mode" -A2 _kern_ | tail -1 | awk '{print $1}':[Kernel] - Get kernel version from kernel binary (Useful when file command is not available, like busybox)
+mount -n --bind -o ro _cmdline_ /proc/cmdline:[Kernel] - Hijack cmdline on the run!!
+ls -D /proc/[0-9]*/{status,oom_score_adj} | sort --field-separator=/ --numeric-sort -k3 | xargs sed '/^[0-9*]/s/^/OomAdjScore:	/' - | grep -E -w 'OomAdjScore|Name|Pid':[Memory] - Get OOM score from running processes to stdout (sorted)
+sudo slabtop -o:[Memory] - Show slab table once and exit
+swapon --bytes --show:[Memory] - Show swap usage in bytes
+lsmem -a -o RANGE,SIZE,STATE,REMOVABLE,ZONES,NODE,BLOCK:[Memory] - Show detailed memory table
+EOF
+)
+    local -a _kernargs=("${(@f)$(getcmd $_kern)}")
+    _describe -t kernel 'Kernel - debug' _kernargs
+    _evalarg=
+    return 0
+}
+
+function _pacman() {
+    _pac=$(cat <<'EOF'
+sudo pacman -R --nodeps _pkg_:[Pacman] - Remove _pkg_ and skip dependency checks
+sudo pacman -Rnc _pkg_:[Pacman] - Remove _pkg_ with all dependencies
+sudo pacman -Rnd _pkg_:[Pacman] - Force remove _pkg_ without removing dependencies
+pacman -Qlq _pkg_ | while read f; do [[ -d $f ]] && mkdir -p "./$f" || cp $f "./$f"; done:[Pacman] - Extract pacman package (get all files, compatible with deb binaries) to current directory
+sudo pacman -Qii _pkg_:[Pacman] - Get information about package
+EOF
+)
+    local -a _pacargs=("${(@f)$(getcmd $_pac)}")
+    _describe -t pacmanpac 'Pacman tricks' _pacargs
+    _evalarg=
+    return 0
+}
+
+local state line
+
+_arguments -C \
+    "1: :->cmds" \
+    "*: :->args"
+
+case "$state" in
+    cmds)
+        _values "phint command" \
+            "str.h[String manipulation]" \
+            "device[Block dev scripts - mapper - storage]" \
+            "kernel[Kernel related commands]" \
+            "pacman[Useful pacman commands]" \
+            "driverinfo[Driver scripts]" && return 0
+        ;;
+    args)
+        case "$line[1]" in
+            block)
+                _block
+                ;;
+            pacman)
+                _pacman
+                ;;
+            driverinfo)
+                _driverinfo
+                ;;
+            str.h)
+                _str.h
+                ;;
+        esac
+esac
+
+# vim: set et ts=4 sw=4 ft=zsh:

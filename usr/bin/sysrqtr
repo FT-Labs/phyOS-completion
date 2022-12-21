@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+
+
+case $1 in
+    -[b-z])
+        echo ${1:1} | sudo tee /proc/sysrq-trigger
+        ;;
+esac
