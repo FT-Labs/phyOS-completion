@@ -36,12 +36,13 @@ EOF
     return 0
 }
 
-# '_.[-a-zA-Z]*?_\b(?<=[[:punct:]])'
+#
 
 function _str.h() {
     _str_h=$(cat <<'EOF'
 | sed 's/^[[\:blank\:]]*//;s/[[\:blank\:]]*$//':[Pipe] - Remove trailing spaces from string
 | sed '/^_match_/s/^/_prefix_/':[Pipe] - Insert _prefix_ before _match_
+| grep -Po '_delim_._word_*?_delim_\b(?<=_endchar_)':[Pipe] - Split str by _delim_ with _word_ regex with look ahead _endchar_
 _var_="(${$(echo -n _str_ | tr -t -C '!' '[\\0*]' | xxd -c 1 -d -a | awk -F\: '/21/ {print $1}')})":[Array] - Split _str_ to numerical array
 _arr_="${(@f)$_str_}":[Array] - Split _str_ by newline to array _arr_ (IFS seperated)
 _arr_="${(s._delim_.)_str_}":[Array] - Split _str_ by _delim_
