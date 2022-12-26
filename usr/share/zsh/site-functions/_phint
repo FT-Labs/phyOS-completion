@@ -11,23 +11,44 @@ function getcmd() {
 # sudo efibootmgr -v
 # sudo gdisk -l _dev_
 
-# DEV
-# sudo dmidecode
-# sudo lshw
-# sudo lshw -c "CLASS"
-# sudo lspci -k
-# sudo lspci -kv
+function boot() {
+    _boot=$(cat <<'EOF'
+
+EOF
+)
+    return 0
+}
 
 function _block() {
     _blocks=$(cat <<-'EOF'
 sudo blockdev --report:[Block] - Print report for block devices
 sudo ls -lanR /sys/block:[Block] - Get virtual block paths
 sudo udevmadm info _dev_:[Block] - Get udev information about _dev_ path
+findmnt --noheadings / | awk '{print $2}':[Block] - Get path of root partition
+sudo lsblk --tree:[Block] - Get tree view of block devices
+sudo fuser -kc _mount_:[Block - Mount] - Force kill processes using _mount_
 sudo blkid _dev_ -D  --match-tag UUID -o value:[Filesystem] - Get _dev_ UUID value
-debugfs -R "stat _dest_" _dev_ | grep -o "Flags\:.*":[Filesystem] - Get stats of _dest_ from _dev_ (Can get options even if it is mounted from any mount command)
+sudo debugfs -R "stat _dest_" _dev_ | grep -o "Flags\:.*":[Filesystem] - Get stats of _dest_ from _dev_ (Can get options even if it is mounted from any mount command)
+sudo dumpe2fs _dev_:[Filesystem] - Get fs superblock and verbose information of _dev_
+sudo tune2fs -L _label_ _dev_:[Filesystem] - Set fs label to _label_ for _dev_
+sudo tune2fs -j _dev_:[Filesystem] - Convert ext2 fs of _dev_ to ext3
+sudo tune2fs -U _uuid_ _dev_:[Filesystem] - Set _dev_ UUID to _uuid_
+sudo mount -o offset=_offset_ _fs_ _dest_:[Filesystem] - Mount a file _fs_ containing partitions with _offset_ to _dest_
+sudo resize2fs _dev_ _size_:[Filesystem] - Resize a filesystem to _size_ (useful with lvm)
+sudo e2fsck -f _dev_:[Filesystem] - Check and fix superblocks of _dev_ which has ext? filesystem
+sudo mkfs._fs_ _dev_:[Filesystem] - Create filesystem and format _dev_ with _fs_ filesystem
 sudo losetup -a:[Loop] - Print loop device status
+sudo mount -o loop -t iso9660 _iso_ _dest_:[Loop] - Mount iso9660 (disk) _iso_ image to _dest_
 sudo dmsetup ls --tree --table devname -o blkdevname,compact:[Mapper] - Print dm deps in each line
 sudo dmsetup ls --tree --table devname -o blkdevname,compact | grep $(mount | awk '/on \/ / {n=split($1,a,"/"); print a[n]}') | awk '{print $(NF-1)}' | tr -d "<>":[Mapper] - Get devname of encrypted root partition
+sudo lvcreate -L _size_ -n _name_ _vgname_:[Mapper] - Create a new logical volume with _size_ with _name_ in _vgname_
+sudo lvextend -r  -L _size_ _lvpath_:[Mapper] - Extend a lv volume _lvpath_ with _size_ (add -r flag for resizing fs)
+sudo vgcreate _vgname_ _pv**_:[Mapper] - Create vg _vgname_ in any number of _pv**_ physical volumes
+sudo vgchange -a n _vg_:[Mapper] - Enable/disable _vg_ logical volumes
+sudo vgextend _vg_ _pv_:[Mapper] - Extend _vg_ with a new _pv_ physical vol
+sudo vgrename _old_ _new_:[Mapper] - Change vg name from _old_ to _new_ (All LV must be disabled)
+sudo pvmove -v _src_ _dest_:[Mapper] - Move physical volume _src_ to _dest_
+sudo mount -t tmpfs -o size=_size_ tmpfs _dest_:[Ram] - Create a ram fs with _size_ to _dest_
 EOF
 )
     local -a _blockargs=("${(@f)$(getcmd $_blocks)}")
@@ -57,11 +78,21 @@ EOF
 function _kernel() {
     _kern=$(cat <<'EOF'
 grep --text -m 1 "video mode" -A2 _kern_ | tail -1 | awk '{print $1}':[Kernel] - Get kernel version from kernel binary (Useful when file command is not available, like busybox)
+sudo vmstat --slabs:[Kernel] - Show kernel slab information
+sudo vmstat --forks:[Kernel] - Print total number of forks since boot
+sudo vmstat --stats:[Kernel] - Show event counter statistics
 mount -n --bind -o ro _cmdline_ /proc/cmdline:[Kernel] - Hijack cmdline on the run!!
+uptime:[Kernel] - Get runtime of system in current boot
+tty:[Kernel] - Get current tty of user
+echo _args_ | sudo tee /dev/pts/_num_:[Kernel] - Send output to another pseudoterminal (works on chroot)
+sudo ln -sf /bin/sh _shell_:[Kernel] - Change default shell softlink to _shell_
+tail -f --pid=_pid_:[Kernel] - Watch process with _pid_
+sudo sh -c "mount --bind /proc _dest_/proc; mount --bind /dev _dest_/dev; mount --bind /sys _dest_/sys":[Kernel] - Prepare _dest_ fs or partition for chrooting
 ls -D /proc/[0-9]*/{status,oom_score_adj} | sort --field-separator=/ --numeric-sort -k3 | xargs sed -e '/^[0-9]/s/^/OomAdjScore\:/ ' 2>/dev/null | grep -E -w 'OomAdjScore|Name|Pid':[Memory] - Get OOM score from running processes to stdout (sorted)
 sudo slabtop -o:[Memory] - Show slab table once and exit
 swapon --bytes --show:[Memory] - Show swap usage in bytes
 lsmem -a -o RANGE,SIZE,STATE,REMOVABLE,ZONES,NODE,BLOCK:[Memory] - Show detailed memory table
+sudo grep -H '' /sys/module/_module_*/parameters/*:[Module] - Get module parameter information
 EOF
 )
     local -a _kernargs=("${(@f)$(getcmd $_kern)}")
@@ -72,11 +103,11 @@ EOF
 
 function _pacman() {
     _pac=$(cat <<'EOF'
-        sudo pacman -R --nodeps _pkg_:[Pacman] - Remove _pkg_ and skip dependency checks
-        sudo pacman -Rnc _pkg_:[Pacman] - Remove _pkg_ with all dependencies
-        sudo pacman -Rnd _pkg_:[Pacman] - Force remove _pkg_ without removing dependencies
-        pacman -Qlq _pkg_ | while read f; do [[ -d $f ]] && mkdir -p "./$f" || cp $f "./$f"; done:[Pacman] - Extract pacman package (get all files, compatible with deb binaries) to current directory
-        sudo pacman -Qii _pkg_:[Pacman] - Get information about package
+sudo pacman -R --nodeps _pkg_:[Pacman] - Remove _pkg_ and skip dependency checks
+sudo pacman -Rnc _pkg_:[Pacman] - Remove _pkg_ with all dependencies
+sudo pacman -Rnd _pkg_:[Pacman] - Force remove _pkg_ without removing dependencies
+pacman -Qlq _pkg_ | while read f; do [[ -d $f ]] && mkdir -p "./$f" || cp $f "./$f"; done:[Pacman] - Extract pacman package (get all files, compatible with deb binaries) to current directory
+sudo pacman -Qii _pkg_:[Pacman] - Get information about package
 EOF
 )
     local -a _pacargs=("${(@f)$(getcmd $_pac)}")
@@ -88,6 +119,7 @@ EOF
 function _sysd() {
     _sys_d=$(cat <<'EOF'
 sudo journalctl -b -1  -p "emerg".."crit":[Boot] - Get emergency to critical logs from boot
+sudo journalctl --since "_num_ days ago":[Log] - Get logs from _num_ days before till now
 sudo journalctl _SYSTEMD_UNIT=_unit_.service:[Unit] - Get logs generated by _unit_
 sudo journalctl -u _unit_:[Unit] - Get all logs related to _unit_
 sudo systemctl list-units:[Unit] - List units
@@ -128,8 +160,6 @@ sudo ip link set _dev_ down:[Status] - Set _dev_ down
 sudo ip link set _dev_ promisc on:[Status] - Enable promiscius mode for _dev_
 sudo ip link set _dev_ mtu _size_:[Packet] - Set largest frame or packet = _size_
 
-
-
 EOF
 )
 
@@ -139,44 +169,112 @@ EOF
     return 0
 }
 
+function _device() {
+    _devices=$(cat <<'EOF'
+sudo vmstat --disk:[Block] - Show block device summary information
+sudo udevadm info -a -n _dev_ | egrep 'looking|DRIVER':[Block] - Try to check block _dev_ kernel driver
+lscpu -ae:[Cpu] - Get cpu usage information
+sudo dmidecode:[Device] - Get hardware dmi information
+sudo awk '{print $1*10^-6 " W"}' /sys/class/power_supply/BAT?/power_now:[Power] - Get current power usage
+read e < /sys/class/power_supply/BAT?/energy_now; read p < /sys/class/power_supply/BAT?/power_now; echo "print($e/$p)" | python3:[Power] - Get remaining battery hour
+sudo lshw -c _class_:[Hardware] - Get specific _class_ hardware information (input, storage ..)
+sudo lshw:[Hardware] - Get general hardware information
+xinput list:[Input] - Get Xorg input device information
+xinput list-props _id_:[Input] - Get Xorg device with _id_ input properties
+vmstat --active:[Memory] - Show active/inactive memory information
+sudo lspci -k:[PCI] - Get PCI information and kernel modules
+sudo lspci -kv:[PCI] - Get PCI information,kernel modules be verbose
+sudo lsusb:[Usb] - Get usb device information
+sudo lsusb -t:[Usb] - Get usb device information with tree view
+sudo lsusb -v:[Usb] - Usb device information verbose
+EOF
+)
+
+    local -a _devargs=("${(@f)$(getcmd $_devices)}")
+    _describe -t device 'Device - hardware related' _devargs
+    _evalarg=
+    return 0
+}
+
+function _user() {
+    _users=$(cat <<'EOF'
+sudo useradd -m _user_:[User] - Add a new _user_ to system with home directory
+sudo useradd -M _user_:[User] - Add a new _user_ to system without home directory
+sudo useradd -G _group_ _user_:[User] - Create new user and add to _group_
+sudo usermod -d -m _newhome_ _user_:[User] - Change _user_ home dir to _newhome_
+sudo usermod -u _uid_ _user_:[User] - Change uid of _user_ to _uid_
+sudo usermod -aG _groups,_ _user_:[User] - Add user to any number of , seperated _groups,_
+sudo userdel _user_:[User] - Delete _user_ from system
+sudo usermod --shell _shell_ _user_:[User] - Change default shell of _user_ to _shell_
+chsh -s _shell_ _user_:[User] - Change default shell of _user_ to _shell_
+sudo pkill -9 -u _user_:[User] - Force kill _user_ session
+sudo killall -9 -u _user_:[User] - Force kill all processes and session of _user_
+passd _user_:[User] - Change password of _user_
+w:[User] - Get logged user and process of users
+id:[User] - Get verbose information about current user
+last:[User] - Get last login information about users
+su - _newuser_:[User] - Change current user to _newuser_
+sudo -u _newuser_ -s:[User] - Change current user to _newuser_ with sudo
+EDITOR=_editor_ sudo visudo:[User] - Edit sudoers file with _editor_
+sudo groupadd _name_:[Group] - Create new group with _name_
+sudo groupadd -g _id_ _name_:[Group] - Create new group with _name_ with _id_
+sudo groupdel -f _name_:[Group] - Force delete _name_ group
+sudo groupmod _old_ -n _new_:[Group] - Change _old_ group name to _new_
+groups _user_:[Group] - List groups of _user_
+sudo chown _user_\:_group_ _target_:[Permission] - Change owner of _target_ to _user_ and group to _group_
+sudo chown -hR _user_ _path_:[Permission] - Recursively change file ownerships to _user_ in _path_ (Change symlink ownership, dont follow)
+sudo chown -hr _user_ _path_:[Permission] - Recursively change file ownerships to _user_ in _path_ (Follow symlink and change ownership of all)
+sudo chmod _mask_ _path_:[Permission] - Change flags of _path_ to _mask_ (e.g r+w, 777)
+sudo chgrp _group_ _path_:[Permission] - Change group owner of _path_ to _group_
+sudo getfacl _file_:[Permission] - Verbose information about _file_ permissions
+sudo chattr _flags_ _file_:[Permission] - Change extended attributes to _flags_ of _file_ (e.g +i for immutable)
+lsattr _file_:[Permission] - Display extended attributes of _file_
+EOF
+)
+
+    local -a _userargs=("${(@f)$(getcmd $_users)}")
+    _describe -t users 'User - group related commands' _userargs
+    _evalarg=
+    return 0
+}
+
+
 _arguments -C \
     "1: :->cmds" \
-    "*: :->args"
+    "*: :->args" && return 0
+
 
 case "$state" in
     cmds)
         _values "phint command" \
-            "block[Block dev scripts - mapper - storage]" \
-            "driverinfo[Driver scripts]" \
+            "block[Block - mapper - storage related commands]" \
+            "boot[Boot - partition related commands]" \
+            "device[Hardware related information]" \
             "kernel[Kernel related commands]" \
             "network[Network related commands]" \
             "pacman[Useful pacman commands]" \
             "systemd[Systemd - journal commands]" \
+            "user[User - group related commands]" \
             "str.h[String manipulation]" && return 0
         ;;
     args)
         case "$line[1]" in
             block)
-                _block
-                ;;
-            pacman)
-                _pacman
-                ;;
-            driverinfo)
-                _driverinfo
-                ;;
-            str.h)
-                _str.h
-                ;;
+                _block ;;
+            device)
+                _device ;;
             kernel)
-                _kernel
-                ;;
-            network)
-                _net
-                ;;
+                _kernel ;;
             systemd)
-                _sysd
-                ;;
+                _sysd ;;
+            network)
+                _net ;;
+            user)
+                _user ;;
+            pacman)
+                _pacman ;;
+            str.h)
+                _str.h ;;
         esac
 esac
 
