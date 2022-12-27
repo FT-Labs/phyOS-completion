@@ -57,13 +57,15 @@ EOF
     return 0
 }
 
-#
+
+ #| grep -Po '_delim_._word_*?_delim_\b(?<=_endchar_)':[Pipe] - Split str by _delim_ with _word_ regex with look ahead _endchar_
 
 function _str.h() {
     _str_h=$(cat <<'EOF'
 | sed 's/^[[\:blank\:]]*//;s/[[\:blank\:]]*$//':[Pipe] - Remove trailing spaces from string
 | sed '/^_match_/s/^/_prefix_/':[Pipe] - Insert _prefix_ before _match_
-| grep -Po '_delim_._word_*?_delim_\b(?<=_endchar_)':[Pipe] - Split str by _delim_ with _word_ regex with look ahead _endchar_
+| grep -Po '\\_delim_([_group_].*?)\\_delim_':[Pipe] - Get word surrounded by _delim_ with _group_ characters
+| grep -Po '_delim_._word_*?_delim_\\b(?<=_endchar_)':[Pipe] - Split str by _delim_ with _word_ regex with look ahead _endchar_
 _var_="(${$(echo -n _str_ | tr -t -C '!' '[\\0*]' | xxd -c 1 -d -a | awk -F\: '/21/ {print $1}')})":[Array] - Split _str_ to numerical array
 _arr_="${(@f)$_str_}":[Array] - Split _str_ by newline to array _arr_ (IFS seperated)
 _arr_="${(s._delim_.)_str_}":[Array] - Split _str_ by _delim_
@@ -129,6 +131,7 @@ sudo systemctl list-dependencies:[System] - Get all dependencies of systemd unit
 sudo systemctl list-jobs:[System] - Get active jobs
 sudo systemctl list-timers:[System] - Get all systemd unit timers
 sudo systemctl list-unit-files:[System] - Get all unit files
+sudo systemctl status --all:[System] - Tree view of all units
 sudo systemd-analyze:[System] - Get startup time starting from boot
 sudo systemd-analyze blame:[System] - Get startup time for each unit starting from boot
 EOF
