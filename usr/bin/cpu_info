@@ -1,0 +1,19 @@
+#!/usr/bin/env zsh
+
+c=$(pwd)
+cd /sys/devices/system/cpu/cpufreq
+#eval `/bin/ls --width 0 -v -m policy* | awk -F ':\n' -v RS= -v OFS='=' '{print $1,$2}' | tr -d ' '`
+eval `/bin/ls --width 0 -v -m policy* | awk -F ':\n' -v RS= -v OFS='=' 'NR==1 {printf "policy_f=(%s)",$2} END { printf "_size=%d",NR-1}' | tr -d ','`
+
+exp=$(echo ${(F)policy_f})
+for pol in {0..$_size}; do
+    c=$(
+    find policy$pol/* -maxdepth 0 -type f | while read f; do
+         cat $f 2>&1
+    done
+    )
+    {
+        echo "\\tCPU $pol"
+        paste -d '\t' <(echo -n $exp) <(echo -n $c)
+    } | prettytable
+done

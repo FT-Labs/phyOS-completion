@@ -11,12 +11,23 @@ function getcmd() {
 # sudo efibootmgr -v
 # sudo gdisk -l _dev_
 
-function boot() {
-    _boot=$(cat <<'EOF'
-
+function _boot() {
+    _boots=$(cat <<'EOF'
+sudo efibootmgr -v:[EFI] - Get efi boot entries
+sudo efibootmgr -b _bootnum_ -B:[EFI] - Delete _bootnum_ entry
+sudo efibootmgr -b _bootnum_ -a:[EFI] - Activate _bootnum_ entry
+sudo efibootmgr -b _bootnum_ -A:[EFI] - Set _bootnum_ as inactive
+sudo ls -lanR /sys/firmware:[EFI] - Get list of firmware related files
+sudo lsblk | grep disk | awk '{print $1}' | sudo xargs -I % gdisk -l /dev/% | grep -E 'Disk|EF00':[EFI] - Get EFI (ESP) partitions of all block devices
+sudo efibootmgr -c -d _bootdev_ -p _bootpart_ -L _bootname_ -l _bootloader_:[Boot] - Create entry for _bootloader_ named _bootname_ in dev _bootdev_ partition _bootpart_
+sudo efibootmgr -c -d _dev_ -p _bootpart_ -L _bootname_ -l _kernel_ -u '_cmdline_ initrd=\\_img_':[Boot] - Create entry for _kernel_ with _cmdline_ and image _img_ in _dev_ partition _bootpart_ with nname _bootname_
+sudo ls -lanR /boot:[Boot] - List files in boot
+sudo gdisk -l _dev_:[Boot] - Get partition entries of _dev_ (GPT only)
 EOF
 )
-    return 0
+    local -a _bootargs=("${(@f)$(getcmd $_boots)}")
+    _describe -t boot 'Block - nvme - mapper related' _bootargs
+    _evalarg=
 }
 
 function _block() {
@@ -26,6 +37,7 @@ sudo ls -lanR /sys/block:[Block] - Get virtual block paths
 sudo udevmadm info _dev_:[Block] - Get udev information about _dev_ path
 findmnt --noheadings / | awk '{print $2}':[Block] - Get path of root partition
 sudo lsblk --tree:[Block] - Get tree view of block devices
+ sed 's/#.*//' /etc/fstab | column --table --table-columns SOURCE,TARGET,TYPE --table-hide -:[Block] - Parse fstab beatifully!
 sudo fuser -kc _mount_:[Block - Mount] - Force kill processes using _mount_
 sudo blkid _dev_ -D  --match-tag UUID -o value:[Filesystem] - Get _dev_ UUID value
 sudo debugfs -R "stat _dest_" _dev_ | grep -o "Flags\:.*":[Filesystem] - Get stats of _dest_ from _dev_ (Can get options even if it is mounted from any mount command)
@@ -153,15 +165,15 @@ ip maddr show dev _dev_:[ip] - Display multicast information for device _dev_
 ip neigh:[ip] - Display neighbour objects
 ip neigh show dev _dev_:[ip] Show the ARP cache for device _dev_
 ip link dev _dev_:[ip] - Display information for only _dev_
+sudo ip addr add _ipaddr/sm_ dev _dev_:[ip] - Add _ipaddr/sm_ with submask to _dev_
+sudo ip addr del _ipaddr/sm_ dev _dev_:[ip] - Delete _ipaddr/sm_ with submask to _dev_
+sudo ip link set _dev_ mtu _size_:[Packet] - Set largest frame or packet = _size_
 ip route:[Route] - List all route entries in kernel
 ip route add default via _gateway_ dev _dev_:[Route] - Add default route via the local _gateway_ that can be reached on device _dev_
 ip route add _ipaddr/sm_ via _gateway_:[Route] - Add a route to _ipaddr/sm_ via _gateway_
-sudo ip addr add _ipaddr/sm_ dev _dev_:[ip] - Add _ipaddr/sm_ with submask to _dev_
-sudo ip addr del _ipaddr/sm_ dev _dev_:[ip] - Delete _ipaddr/sm_ with submask to _dev_
 sudo ip link set _dev_ up:[Status] - Set _dev_ up
 sudo ip link set _dev_ down:[Status] - Set _dev_ down
 sudo ip link set _dev_ promisc on:[Status] - Enable promiscius mode for _dev_
-sudo ip link set _dev_ mtu _size_:[Packet] - Set largest frame or packet = _size_
 
 EOF
 )
@@ -177,9 +189,12 @@ function _device() {
 sudo vmstat --disk:[Block] - Show block device summary information
 sudo udevadm info -a -n _dev_ | egrep 'looking|DRIVER':[Block] - Try to check block _dev_ kernel driver
 lscpu -ae:[Cpu] - Get cpu usage information
+sudo cpu_info:[Cpu] - Get verbose information about CPU from proc (runs script)
+sensors | awk '/Tctl/{print $2}' || sensors | awk '/Core/ {print $3}' | tr -d "+C°" | awk '{ sum += $1 } END { if (NR > 0) print sum / NR }':[Cpu] - Get x64 intel - amd cpu temperature (C°)
 sudo dmidecode:[Device] - Get hardware dmi information
 sudo awk '{print $1*10^-6 " W"}' /sys/class/power_supply/BAT?/power_now:[Power] - Get current power usage
 read e < /sys/class/power_supply/BAT?/energy_now; read p < /sys/class/power_supply/BAT?/power_now; echo "print($e/$p)" | python3:[Power] - Get remaining battery hour
+cat /proc/acpi/wakeup:[Power] - Check device wakeup status options
 sudo lshw -c _class_:[Hardware] - Get specific _class_ hardware information (input, storage ..)
 sudo lshw:[Hardware] - Get general hardware information
 xinput list:[Input] - Get Xorg input device information
@@ -190,6 +205,7 @@ sudo lspci -kv:[PCI] - Get PCI information,kernel modules be verbose
 sudo lsusb:[Usb] - Get usb device information
 sudo lsusb -t:[Usb] - Get usb device information with tree view
 sudo lsusb -v:[Usb] - Usb device information verbose
+lsusb -v | grep -E ' Device [0-9]|MaxPower':[Usb] - Get power consumption of usb devices
 EOF
 )
 
@@ -264,6 +280,8 @@ case "$state" in
         case "$line[1]" in
             block)
                 _block ;;
+            boot)
+                _boot ;;
             device)
                 _device ;;
             kernel)
