@@ -163,7 +163,7 @@ ip -s link:[ip] - Show interface statistics
 ip maddr:[ip] - Display multicast information for all devices
 ip maddr show dev _dev_:[ip] - Display multicast information for device _dev_
 ip neigh:[ip] - Display neighbour objects
-ip neigh show dev _dev_:[ip] Show the ARP cache for device _dev_
+ip neigh show dev _dev_:[ip] - Show the ARP cache for device _dev_
 ip link dev _dev_:[ip] - Display information for only _dev_
 sudo ip addr add _ipaddr/sm_ dev _dev_:[ip] - Add _ipaddr/sm_ with submask to _dev_
 sudo ip addr del _ipaddr/sm_ dev _dev_:[ip] - Delete _ipaddr/sm_ with submask to _dev_
