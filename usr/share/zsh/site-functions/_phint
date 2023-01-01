@@ -174,7 +174,6 @@ ip route add _ipaddr/sm_ via _gateway_:[Route] - Add a route to _ipaddr/sm_ via 
 sudo ip link set _dev_ up:[Status] - Set _dev_ up
 sudo ip link set _dev_ down:[Status] - Set _dev_ down
 sudo ip link set _dev_ promisc on:[Status] - Enable promiscius mode for _dev_
-
 EOF
 )
 
