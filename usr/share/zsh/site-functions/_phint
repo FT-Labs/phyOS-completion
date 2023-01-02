@@ -6,11 +6,6 @@ function getcmd() {
     echo $@ | sed -e "s/\\\/\\\\\\\/g;s/\\\:/:/g"
 }
 
-# sudo ls -lanR /boot
-# sudo ls -lanR /sys/firmware
-# sudo efibootmgr -v
-# sudo gdisk -l _dev_
-
 function _boot() {
     _boots=$(cat <<'EOF'
 sudo efibootmgr -v:[EFI] - Get efi boot entries
@@ -20,7 +15,7 @@ sudo efibootmgr -b _bootnum_ -A:[EFI] - Set _bootnum_ as inactive
 sudo ls -lanR /sys/firmware:[EFI] - Get list of firmware related files
 sudo lsblk | grep disk | awk '{print $1}' | sudo xargs -I % gdisk -l /dev/% | grep -E 'Disk|EF00':[EFI] - Get EFI (ESP) partitions of all block devices
 sudo efibootmgr -c -d _bootdev_ -p _bootpart_ -L _bootname_ -l _bootloader_:[Boot] - Create entry for _bootloader_ named _bootname_ in dev _bootdev_ partition _bootpart_
-sudo efibootmgr -c -d _dev_ -p _bootpart_ -L _bootname_ -l _kernel_ -u '_cmdline_ initrd=\\_img_':[Boot] - Create entry for _kernel_ with _cmdline_ and image _img_ in _dev_ partition _bootpart_ with nname _bootname_
+sudo efibootmgr -c -d _dev_ -p _bootpart_ -L _bootname_ -l _kernel_ -u '_cmdline_ initrd=\\_img_':[Boot] - Create entry for _kernel_ with _cmdline_ and image _img_ in _dev_ partition _bootpart_ with name _bootname_
 sudo ls -lanR /boot:[Boot] - List files in boot
 sudo gdisk -l _dev_:[Boot] - Get partition entries of _dev_ (GPT only)
 EOF
@@ -69,9 +64,6 @@ EOF
     return 0
 }
 
-
- #| grep -Po '_delim_._word_*?_delim_\b(?<=_endchar_)':[Pipe] - Split str by _delim_ with _word_ regex with look ahead _endchar_
-
 function _str.h() {
     _str_h=$(cat <<'EOF'
 | sed 's/^[[\:blank\:]]*//;s/[[\:blank\:]]*$//':[Pipe] - Remove trailing spaces from string
@@ -91,6 +83,8 @@ EOF
 
 function _kernel() {
     _kern=$(cat <<'EOF'
+find . -print0 | LC_ALL=C sort -z | cpio --null -R 0\:0 -H newc -o --quiet > _earlycpio_:[Init] - Make early microcode cpio from current directory to file _earlycpio_
+find . | LC_ALL=C sort | cpio --quiet -R 0\:0 -o -H newc > _maincpio_:[Init] - Generate ramfs cpio in current directory to file _maincpio_
 grep --text -m 1 "video mode" -A2 _kern_ | tail -1 | awk '{print $1}':[Kernel] - Get kernel version from kernel binary (Useful when file command is not available, like busybox)
 sudo vmstat --slabs:[Kernel] - Show kernel slab information
 sudo vmstat --forks:[Kernel] - Print total number of forks since boot
@@ -169,8 +163,8 @@ sudo ip addr add _ipaddr/sm_ dev _dev_:[ip] - Add _ipaddr/sm_ with submask to _d
 sudo ip addr del _ipaddr/sm_ dev _dev_:[ip] - Delete _ipaddr/sm_ with submask to _dev_
 sudo ip link set _dev_ mtu _size_:[Packet] - Set largest frame or packet = _size_
 ip route:[Route] - List all route entries in kernel
-ip route add default via _gateway_ dev _dev_:[Route] - Add default route via the local _gateway_ that can be reached on device _dev_
-ip route add _ipaddr/sm_ via _gateway_:[Route] - Add a route to _ipaddr/sm_ via _gateway_
+sudo ip route add default via _gateway_ dev _dev_:[Route] - Add default route via the local _gateway_ that can be reached on device _dev_
+sudo ip route add _ipaddr/sm_ via _gateway_:[Route] - Add a route to _ipaddr/sm_ via _gateway_
 sudo ip link set _dev_ up:[Status] - Set _dev_ up
 sudo ip link set _dev_ down:[Status] - Set _dev_ down
 sudo ip link set _dev_ promisc on:[Status] - Enable promiscius mode for _dev_
@@ -194,6 +188,7 @@ sudo dmidecode:[Device] - Get hardware dmi information
 sudo awk '{print $1*10^-6 " W"}' /sys/class/power_supply/BAT?/power_now:[Power] - Get current power usage
 read e < /sys/class/power_supply/BAT?/energy_now; read p < /sys/class/power_supply/BAT?/power_now; echo "print($e/$p)" | python3:[Power] - Get remaining battery hour
 cat /proc/acpi/wakeup:[Power] - Check device wakeup status options
+sudo powerinfo:[Power] - Get power consumption of devices (runs script)
 sudo lshw -c _class_:[Hardware] - Get specific _class_ hardware information (input, storage ..)
 sudo lshw:[Hardware] - Get general hardware information
 xinput list:[Input] - Get Xorg input device information
@@ -204,7 +199,7 @@ sudo lspci -kv:[PCI] - Get PCI information,kernel modules be verbose
 sudo lsusb:[Usb] - Get usb device information
 sudo lsusb -t:[Usb] - Get usb device information with tree view
 sudo lsusb -v:[Usb] - Usb device information verbose
-lsusb -v | grep -E ' Device [0-9]|MaxPower':[Usb] - Get power consumption of usb devices
+sudo lsusb -v | grep -E ' Device [0-9]|MaxPower':[Usb] - Get power consumption of usb devices
 EOF
 )
 
@@ -227,7 +222,7 @@ sudo usermod --shell _shell_ _user_:[User] - Change default shell of _user_ to _
 chsh -s _shell_ _user_:[User] - Change default shell of _user_ to _shell_
 sudo pkill -9 -u _user_:[User] - Force kill _user_ session
 sudo killall -9 -u _user_:[User] - Force kill all processes and session of _user_
-passd _user_:[User] - Change password of _user_
+passwd _user_:[User] - Change password of _user_
 w:[User] - Get logged user and process of users
 id:[User] - Get verbose information about current user
 last:[User] - Get last login information about users
