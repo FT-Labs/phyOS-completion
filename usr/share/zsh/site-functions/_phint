@@ -36,6 +36,7 @@ sudo lsblk --tree:[Block] - Get tree view of block devices
 sudo fuser -kc _mount_:[Block - Mount] - Force kill processes using _mount_
 sudo blkid _dev_ -D  --match-tag UUID -o value:[Filesystem] - Get _dev_ UUID value
 sudo debugfs -R "stat _dest_" _dev_ | grep -o "Flags\:.*":[Filesystem] - Get stats of _dest_ from _dev_ (Can get options even if it is mounted from any mount command)
+sudo tune2fs -l _dev_ | grep -E 'Free blocks|Reserved block count|Block size' | awk '{print $NF}' | python -c 'import sys; rbc=int(sys.stdin.readline()); fb=int(sys.stdin.readline()); bs=int(sys.stdin.readline()); print(abs(fb-rbc) * bs / 1024**3)':[Filesystem] - Get free size in GB of ext* fs of an unmounted partition _dev_
 sudo dumpe2fs _dev_:[Filesystem] - Get fs superblock and verbose information of _dev_
 sudo tune2fs -L _label_ _dev_:[Filesystem] - Set fs label to _label_ for _dev_
 sudo tune2fs -j _dev_:[Filesystem] - Convert ext2 fs of _dev_ to ext3
