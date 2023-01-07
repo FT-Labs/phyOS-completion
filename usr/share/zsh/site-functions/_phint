@@ -151,37 +151,35 @@ EOF
 
 function _net() {
     _net_s=$(cat <<'EOF'
-iptables -L -n -v:[Firewall] - To check the current status of firewall
-service iptables save:[Firewall] - To save firewall rules. This will save all the ipv4 rules in /etc/sysconfig/iptables file.
-iptables-save > _file-path_:[Firewall] - To save all the iptables rules in a file
-iptables-restore < _file-path_:[Firewall] - To restore the rules from a file
-iptables -A OUTPUT -p _protocol_ -d _ip_ -j DROP:[Firewall] - To block outbound specific protocol traffic to IP or IP range. Will drop all the specific protocol traffic destined for specific IP or IP range.
-iptables -A OUTPUT -p _protocol_ -d _ip_ --dport _port-no_ -j ACCEPT:[Firewall] - To allow outbound traffic to specific IP or subnet on specific port number.
-iptables -A INPUT -p _protocol_ -i _interface_ -j DROP:[Firewall] - To block incoming protocol requests on specific interface.
-iptables -A INPUT -m mac --mac-source _mac-address_ -j DROP:[Firewall] - To drop inbound traffic to specific mac address.
-iptables -A INPUT -p _protocol_ --syn --dport _port-no_ -m connlimit --connlimit-above _number_ -j REJECT:[Firewall] - To limit the number of concurrent connections. connlimit: Allows you to restrict the number of parallel TCP connections to a server per client IP address.
-iptables --flush:[Firewall] - To flush all the iptables rules currently exists in your system.
-iptables -A INPUT -m conntrack --ctstate INVALID -j DROP:[Firewall] - To drop invalid packets.
-iptables -A INPUT -i _interface_ -s _ip_ -j DROP:[Firewall] - To block connection on network interface on source IP or IP range.
-iptables -A INPUT -m _state --state NEW -m _match_ -p _protocol_ --dport _port_\:_port_ -j ACCEPT:[Firewall] - To open particular range of ports.
-iptables -t filter -n -L:[Firewall] - To check all the rules for filter table.
-iptables -N _service_:[Firewall] - To create a new chain.
-iptables -S _chain-name_:[Firewall] - Print all the Rules in selected chain. If no chain is selected, it will show rules for all the chain.
-iptables -E _new-chain-name_ _old-chain-name_:[Firewall] - Rename a chain.
-iptables --list _chain-name_ --line-numbers:[Firewall] - List iptables rule with line numbers. List all rules in the selected chain. If no chain is selected, all chains are listed.
-iptables -A INPUT -p _port_ -j REJECT --reject-with _reject-message_:[Firewall] - Reject specified protocol packets with selected protocol message.
-iptables -Z _chain-name_:[Firewall] - To zero out the counter for all chain and rules or a specified chain.
-iptables -D INPUT -p _protocol_ -j REJECT --reject-with _reject-message_:[Firewall] - Delete a rule.
-iptables -L _chain-name_ -v:[Firewall] - Check chain stats, see stats like no of packets, bytes, source, destination etc for specified chain, then you need to use -v option with iptables command.
-iptables -t _protocol_ -A PREROUTING -i _interface_ -p _protocol_ --dport _port-number_ -j REDIRECT --to-port _port-number_:[Firewall] - Sometimes you might need to hide the real port which listens to the incoming connection, for those cases port redirection or port forwarding will be very useful.
-iptables -l INPUT -d _ip_ -p _protocol_ -m multiport --dport _port-numbers,*_ -j DROP:[Firewall] - To drop inbound specified traffic to specified IP or IP addresses on multiple ports.
-iptables -A INPUT -m conntrack --cstate ESTABLISHED -j ACCEPT:[Firewall] - Allow established connections packets.
-iptables -A INPUT -j LOG:[Firewall] - Enable logging in iptables
-iptables -A INPUT -s _ip/*_ -j LOG:[Firewall] - Enable logging for source IP or subnet.
-iptables -A INPUT -i _interface_ -j LOG --log-prefix "IPtables Rejected packets:":[Firewall] - Savings logs of rejected packets.
-iptables -A INPUT -s _ip/*_ -j LOG --log-prefix '** SUSPECT **':[Firewall] - Enable logging for suspicious filtered packets.
-iptables -t mangle -A PREPROUTING -p tcp --tcp-flags _flags,*_ -j DROP:[Firewall] - Block Packets with Bogus TCP Flags.
-iptables -A INPUT -p tcp -m conntrack --cstate NEW -m limit --limit _time/*_ --limit-burst _packets-size_ -j ACCEPT:[Firewall] - Limit new TCP Connections per second. --limit rate: Maximum average matching rate: specified as a number, with an optional '/second', '/minute', '/hour', or '/day' suffix; the default is 3/hour. --limit-burst rate: Maximum initial number of packets to match: this number gets recharged by one every time the limit specified above is not reached, up to this number; the default is 5.
+sudo iptables -L -n -v:[Firewall] - Check current status of firewall
+service iptables save:[Firewall] - Save all the ipv4 rules in /etc/sysconfig/iptables file
+sudo iptables-save > _file-path_:[Firewall] - To save all the iptables rules in a file
+sudo iptables-restore < _file_:[Firewall] - To restore the rules from _file_
+sudo iptables -A OUTPUT -p _protocol_ -d _ip_ -j DROP:[Firewall] - To block _protocol_ traffic to _ip_ or _ip_ range.
+sudo iptables -A OUTPUT -p _protocol_ -d _ipaddr/sm_ --dport _port_ -j ACCEPT:[Firewall] - To allow outbound traffic to _ipaddr/sm_ on _port_
+sudo iptables -A INPUT -p _protocol_ -i _interface_ -j DROP:[Firewall] - To block incoming protocol requests on _interface_
+sudo iptables -A INPUT -m mac --mac-source _mac_ -j DROP:[Firewall] - To drop inbound traffic to specific _mac_ address.
+sudo iptables -A INPUT -p _protocol_ --syn --dport _port_ -m connlimit --connlimit-above _number_ -j REJECT:[Firewall] - limit the number of concurrent connections to _number_ (connlimit->Allows you to restrict the number of parallel TCP connections to a server per client IP address)
+sudo iptables --flush:[Firewall] - To flush all the iptables rules currently exists in your system.
+sudo iptables -A INPUT -m conntrack --ctstate INVALID -j DROP:[Firewall] - To drop invalid packets.
+sudo iptables -A INPUT -i _interface_ -s _ipaddr/sm_ -j DROP:[Firewall] - To block connection on _interface_ on _ipaddr/sm_ or _ipadrr/sm_ range.
+sudo iptables -t filter -n -L:[Firewall] - To check all the rules for filter table.
+sudo iptables -N _service_:[Firewall] - To create a new chain named _service_
+sudo iptables -S _chain-name_:[Firewall] - Print all the Rules of _chain-name_. If no chain is selected, it will show rules for all the chains.
+sudo iptables -E _new-chain-name_ _old-chain-name_:[Firewall] - Rename _old-chain-name_ to _new-chain-name_
+sudo iptables --list _chain-name_ --line-numbers:[Firewall] - List iptables rule with line numbers. List all rules in _chain-name_. If no chain is selected, all chains are listed.
+sudo iptables -A INPUT -p _port_ -j REJECT --reject-with _reject-message_:[Firewall] - Reject _port_ requests with _reject-message_
+sudo iptables -Z _chain-name_:[Firewall] - Zero out _chain-name_, if empty all chains
+sudo iptables -D INPUT -p _protocol_ -j REJECT --reject-with _reject-message_:[Firewall] - Delete a rule.
+sudo iptables -L _chain-name_ -v:[Firewall] - Check chain stats, see stats like no of packets, bytes, source, destination etc for specified chain, then you need to use -v option with iptables command.
+sudo iptables -t _protocol_ -A PREROUTING -i _interface_ -p _protocol_ --dport _port-number_ -j REDIRECT --to-port _port-number_:[Firewall] - Sometimes you might need to hide the real port which listens to the incoming connection, for those cases port redirection or port forwarding will be very useful.
+sudo iptables -l INPUT -d _ip_ -p _protocol_ -m multiport --dport _port-numbers,*_ -j DROP:[Firewall] - To drop inbound specified traffic to specified IP or IP addresses on multiple ports.
+sudo iptables -A INPUT -m conntrack --cstate ESTABLISHED -j ACCEPT:[Firewall] - Allow established connections packets.
+sudo iptables -A INPUT -j LOG:[Firewall] - Enable logging in iptables
+sudo iptables -A INPUT -s _ip/*_ -j LOG:[Firewall] - Enable logging for source IP or subnet.
+sudo iptables -A INPUT -i _interface_ -j LOG --log-prefix "IPtables Rejected packets:":[Firewall] - Savings logs of rejected packets.
+sudo iptables -A INPUT -s _ip/*_ -j LOG --log-prefix '** SUSPECT **':[Firewall] - Enable logging for suspicious filtered packets.
+sudo iptables -t mangle -A PREPROUTING -p tcp --tcp-flags _flags,*_ -j DROP:[Firewall] - Block Packets with Bogus TCP Flags.
 sudo ip link set _dev_ address _XX-XX-XX-XX-XX-XX_:[MAC] - Change mac address of device _dev_ (_dev_ must be down)
 ip addr show:[ip] - Display all network information
 ip addr show dev _dev_:[ip] - Show network information for only _dev_
@@ -201,16 +199,15 @@ sudo ip route add _ipaddr/sm_ via _gateway_:[Route] - Add a route to _ipaddr/sm_
 sudo ip link set _dev_ up:[Status] - Set _dev_ up
 sudo ip link set _dev_ down:[Status] - Set _dev_ down
 sudo ip link set _dev_ promisc on:[Status] - Enable promiscius mode for _dev_
-ss -_option_:[Socket] - ss is used to dump socket statistics.
-ss -N _nsname_:[Socket] - Switch to the specified network namespace name.
-ss -A _query_:[Socket] - List of socket tables to dump, separated by commas. The following identifiers are understood: all, inet, tcp, udp, raw, unix, packet, netlink, unix_dgram, unix_stream, unix_seqpacket, packet_raw, packet_dgram.
-ss -D _file_:[Socket] - Do not display anything, just dump raw information about TCP sockets to FILE after applying filters. If FILE is - stdout is used.
+ss -_option_:[Socket] - ss is used to dump _option_ socket statistics.
+ss -N _nsname_:[Socket] - Switch to _nsname_ network namespace name.
+ss -A _query_:[Socket] - query=all, inet, tcp, udp, raw, unix, packet, netlink, unix_dgram, unix_stream, unix_seqpacket, packet_raw, packet_dgram.
+ss -D _file_:[Socket] - Do not display anything, just dump raw information about TCP sockets to FILE after applying filters. If _file_ is '-' stdout is used.
 ss -F _file:[Socket] - Read filter information from FILE. Each line of FILE is interpreted like single command line option. If FILE is - stdin is used.
-ss -at '( dport = :_port_ or sport = :_port_ )':[Socket] - Filter connections by port number or port name
+ss -at '( dport = \:_port_ or sport = \:_port_ )':[Socket] - Filter connections by port number or port name
 ss dst _ip_:[Socket] - Show connected sockets from specific address, address range and specified port number
 ss -f _family_:[Socket] - Option to specify the connection family. It will only display the information of specified family. The supported families are: unix, inet, inet6, link, netlink.
 ss -o state _state-filter_:[Socket] - STATE-FILTER allows to construct arbitrary set of states to match.
-iptables -h:[Firewall] - Check other options with iptables command.
 EOF
 )
 
