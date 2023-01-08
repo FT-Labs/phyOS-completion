@@ -6,18 +6,43 @@ function getcmd() {
     echo $@ | sed -e "s/\\\/\\\\\\\/g;s/\\\:/:/g"
 }
 
+function _binary() {
+    _binarys=$(cat <<'EOF'
+numfmt --to iec-i _unit_ --format '%.4f':[Conversion] - Convert bytes to bigger units automatically
+sudo xxd -s _0xADDR_ -l _bytecount_ -c _colsize_ _dev/file_:[Binary] - Print _bytecount_ starting from _0xADDR_ with column size _colsize_
+_dec_=$((16#_hex_)):[Binary] - Convert _hex_ to _dec_
+_hex_=$(([##16]_dec_)):[Binary] - Convert _dec_ to _hex_
+| xxd -r -p:[Pipe - Binary] - Convert string input to binary data
+| xxd -r -p | xxd -e -groupsize _sz_:[Binary - Pipe] - Convert string to little endian sizes of _sz_
+| gzip -1 -c | tail -c8 | od -t x4 -N 4 -A n:[CRC32 - Pipe] Calculate CRC32 hashsum of input
+EOF
+)
+
+    local -a _binaryargs=("${(@f)$(getcmd $_binarys)}")
+    _describe -t binary 'Binary - number - algorithm related' _binaryargs
+    _evalarg=
+    return 0
+}
+
 function _boot() {
     _boots=$(cat <<'EOF'
+sudo efibootmgr -c -d _bootdev_ -p _bootpart_ -L _bootname_ -l _bootloader_:[Boot] - Create entry for _bootloader_ named _bootname_ in dev _bootdev_ partition _bootpart_
+sudo efibootmgr -c -d _dev_ -p _bootpart_ -L _bootname_ -l _kernel_ -u '_cmdline_ initrd=\\_img_':[Boot] - Create entry for _kernel_ with _cmdline_ and image _img_ in _dev_ partition _bootpart_ with name _bootname_
+sudo ls -lanR /boot:[Boot] - List files in boot
+sudo gdisk -l _dev_:[Boot] - Get partition entries of _dev_ (GPT only)
 sudo efibootmgr -v:[EFI] - Get efi boot entries
 sudo efibootmgr -b _bootnum_ -B:[EFI] - Delete _bootnum_ entry
 sudo efibootmgr -b _bootnum_ -a:[EFI] - Activate _bootnum_ entry
 sudo efibootmgr -b _bootnum_ -A:[EFI] - Set _bootnum_ as inactive
 sudo ls -lanR /sys/firmware:[EFI] - Get list of firmware related files
 sudo lsblk | grep disk | awk '{print $1}' | sudo xargs -I % gdisk -l /dev/% | grep -E 'Disk|EF00':[EFI] - Get EFI (ESP) partitions of all block devices
-sudo efibootmgr -c -d _bootdev_ -p _bootpart_ -L _bootname_ -l _bootloader_:[Boot] - Create entry for _bootloader_ named _bootname_ in dev _bootdev_ partition _bootpart_
-sudo efibootmgr -c -d _dev_ -p _bootpart_ -L _bootname_ -l _kernel_ -u '_cmdline_ initrd=\\_img_':[Boot] - Create entry for _kernel_ with _cmdline_ and image _img_ in _dev_ partition _bootpart_ with name _bootname_
-sudo ls -lanR /boot:[Boot] - List files in boot
-sudo gdisk -l _dev_:[Boot] - Get partition entries of _dev_ (GPT only)
+sudo dd if=_dev_ count=16384 skip=1024 bs=1 | gzip -1 -c | tail -c8 | od -t x4 -N 4 -A n:[GPT] - Calculate gpt partition table array checksum of _dev_
+sudo dd if=_partCRC_ of=_dev_ count=4 bs=1 seek=600:[GPT] - Write _partCRC_ checksum to _dev_ gpt table
+sudo dd if=/dev/zero of=_dev_ seek=528  count=4 bs=1:[GPT] - Clear GPT header checksum of _dev_
+sudo dd if=_dev_ skip=512 count=92 bs=1 | gzip -1 -c | tail -c8 | od -t x4 -N 4 -A n:[GPT] - Calculate _dev_ GPT header checksum
+sudo dd if=_headCRC_ of=_dev_ seek=528 count=4 bs=1:[GPT] - Write _headCRC_ header checksum to _dev_
+
+
 EOF
 )
     local -a _bootargs=("${(@f)$(getcmd $_boots)}")
@@ -26,7 +51,8 @@ EOF
 }
 
 function _block() {
-    _blocks=$(cat <<-'EOF'
+    _blocks=$(cat <<'EOF'
+uuid-gen:[Block] - Generate a random uuid
 sudo blockdev --report:[Block] - Print report for block devices
 sudo ls -lanR /sys/block:[Block] - Get virtual block paths
 sudo udevmadm info _dev_:[Block] - Get udev information about _dev_ path
@@ -45,6 +71,8 @@ sudo mount -o offset=_offset_ _fs_ _dest_:[Filesystem] - Mount a file _fs_ conta
 sudo resize2fs _dev_ _size_:[Filesystem] - Resize a filesystem to _size_ (useful with lvm)
 sudo e2fsck -f _dev_:[Filesystem] - Check and fix superblocks of _dev_ which has ext? filesystem
 sudo mkfs._fs_ _dev_:[Filesystem] - Create filesystem and format _dev_ with _fs_ filesystem
+sudo mkfs.ext4 -U _uuid_ _dev_:[Filesystem] - Create ext4 filesystem on _dev_ and set uuid as _uuid_
+sudo mkfs.fat -i _uuid_ _dev_:[Filesystem] - Create fat fs _dev_ and set uuid as _uuid_
 sudo losetup -a:[Loop] - Print loop device status
 sudo mount -o loop -t iso9660 _iso_ _dest_:[Loop] - Mount iso9660 (disk) _iso_ image to _dest_
 sudo dmsetup ls --tree --table devname -o blkdevname,compact:[Mapper] - Print dm deps in each line
@@ -300,6 +328,7 @@ _arguments -C \
 case "$state" in
     cmds)
         _values "phint command" \
+            "binary-number[Binary - number - algorithm related commands]" \
             "block[Block - mapper - storage related commands]" \
             "boot[Boot - partition related commands]" \
             "device[Hardware related information]" \
@@ -312,6 +341,8 @@ case "$state" in
         ;;
     args)
         case "$line[1]" in
+            binary-number)
+                _binary ;;
             block)
                 _block ;;
             boot)
@@ -331,6 +362,7 @@ case "$state" in
             str.h)
                 _str.h ;;
         esac
+        ;;
 esac
 
 # vim: set et ts=4 sw=4 ft=zsh:
