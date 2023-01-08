@@ -12,7 +12,8 @@ numfmt --to iec-i _unit_ --format '%.4f':[Conversion] - Convert bytes to bigger 
 sudo xxd -s _0xADDR_ -l _bytecount_ -c _colsize_ _dev/file_:[Binary] - Print _bytecount_ starting from _0xADDR_ with column size _colsize_
 _dec_=$((16#_hex_)):[Binary] - Convert _hex_ to _dec_
 _hex_=$(([##16]_dec_)):[Binary] - Convert _dec_ to _hex_
-| xxd -r -p:[Pipe - Binary] - Convert string input to binary data
+echo _hex_ | fold -b2 | tac | tr -d '\\n':[Binary] - Convert _hex_ to little endian
+| xxd -r -p:[Binary - Pipe] - Convert string input to binary data
 | xxd -r -p | xxd -e -groupsize _sz_:[Binary - Pipe] - Convert string to little endian sizes of _sz_
 | gzip -1 -c | tail -c8 | od -t x4 -N 4 -A n:[CRC32 - Pipe] Calculate CRC32 hashsum of input
 EOF
@@ -36,13 +37,13 @@ sudo efibootmgr -b _bootnum_ -a:[EFI] - Activate _bootnum_ entry
 sudo efibootmgr -b _bootnum_ -A:[EFI] - Set _bootnum_ as inactive
 sudo ls -lanR /sys/firmware:[EFI] - Get list of firmware related files
 sudo lsblk | grep disk | awk '{print $1}' | sudo xargs -I % gdisk -l /dev/% | grep -E 'Disk|EF00':[EFI] - Get EFI (ESP) partitions of all block devices
-sudo dd if=_dev_ count=16384 skip=1024 bs=1 | gzip -1 -c | tail -c8 | od -t x4 -N 4 -A n:[GPT] - Calculate gpt partition table array checksum of _dev_
+sudo dd if=_dev_ count=16384 skip=1024 bs=1 | gzip -1 -c | tail -c8 | od -t x4 -N 4 -A n:[GPT] - Calculate gpt partition table array checksum of _dev_ in BE binary
+sudo dd if=_dev_ count=16384 skip=1024 bs=1 | gzip -1 -c | tail -c8 | od -t x4 -N 4 -A n --endian=big | xxd -r -p -g4:[GPT] - Calculate gpt partition array checksum in LE binary
 sudo dd if=_partCRC_ of=_dev_ count=4 bs=1 seek=600:[GPT] - Write _partCRC_ checksum to _dev_ gpt table
 sudo dd if=/dev/zero of=_dev_ seek=528  count=4 bs=1:[GPT] - Clear GPT header checksum of _dev_
-sudo dd if=_dev_ skip=512 count=92 bs=1 | gzip -1 -c | tail -c8 | od -t x4 -N 4 -A n:[GPT] - Calculate _dev_ GPT header checksum
+sudo dd if=_dev_ skip=512 count=92 bs=1 | gzip -1 -c | tail -c8 | od -t x4 -N 4 -A n:[GPT] - Calculate _dev_ GPT header checksum in BE binary
+sudo dd if=_dev_ skip=512 count=92 bs=1 | gzip -1 -c | tail -c8 | od -t x1 -N 4 --endian=big -A n  | xxd -r -p -g4:[GPT] - Calculate _dev_ gpt header checksum in LE binary
 sudo dd if=_headCRC_ of=_dev_ seek=528 count=4 bs=1:[GPT] - Write _headCRC_ header checksum to _dev_
-
-
 EOF
 )
     local -a _bootargs=("${(@f)$(getcmd $_boots)}")
