@@ -228,6 +228,7 @@ sudo ip route add _ipaddr/sm_ via _gateway_:[Route] - Add a route to _ipaddr/sm_
 sudo ip link set _dev_ up:[Status] - Set _dev_ up
 sudo ip link set _dev_ down:[Status] - Set _dev_ down
 sudo ip link set _dev_ promisc on:[Status] - Enable promiscius mode for _dev_
+_cmd_ | ssh _host_@_hostip_ sh -c "_outcmd_ > _destfile_":[ssh] - Use stdout redirection through ssh
 ss -_option_:[Socket] - ss is used to dump _option_ socket statistics.
 ss -N _nsname_:[Socket] - Switch to _nsname_ network namespace name.
 ss -A _query_:[Socket] - query=all, inet, tcp, udp, raw, unix, packet, netlink, unix_dgram, unix_stream, unix_seqpacket, packet_raw, packet_dgram.
@@ -237,6 +238,9 @@ ss -at '( dport = \:_port_ or sport = \:_port_ )':[Socket] - Filter connections 
 ss dst _ip_:[Socket] - Show connected sockets from specific address, address range and specified port number
 ss -f _family_:[Socket] - Option to specify the connection family. It will only display the information of specified family. The supported families are: unix, inet, inet6, link, netlink.
 ss -o state _state-filter_:[Socket] - STATE-FILTER allows to construct arbitrary set of states to match.
+sudo iw dev wlan0 scan | grep -Po '(?<=SSID\\: ).*':[Wifi] - Scan networks without network manager
+wpa_passphrase _essid_ _pass_ | sudo tee /etc/wpa_supplicant.conf:[Wifi] - Create wpa supplicant conf on _essid_ with password _pass_
+sudo wpa_supplicant -c /etc/wpa_supplicant.conf -i _iface:[Wifi] - Launch wpa supplicant on _iface_
 EOF
 )
 
