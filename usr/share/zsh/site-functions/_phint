@@ -84,6 +84,8 @@ sudo vgcreate _vgname_ _pv**_:[Mapper] - Create vg _vgname_ in any number of _pv
 sudo vgchange -a n _vg_:[Mapper] - Enable/disable _vg_ logical volumes
 sudo vgextend _vg_ _pv_:[Mapper] - Extend _vg_ with a new _pv_ physical vol
 sudo vgrename _old_ _new_:[Mapper] - Change vg name from _old_ to _new_ (All LV must be disabled)
+sudo pvs -v --segments _dev_:[Mapper] - Print segments of a PV
+sudo pvmove --alloc anywhere _dev_:_start_-_end_:[Mapper] - Move PV segments to other location
 sudo pvmove -v _src_ _dest_:[Mapper] - Move physical volume _src_ to _dest_
 sudo mount -t tmpfs -o size=_size_ tmpfs _dest_:[Ram] - Create a ram fs with _size_ to _dest_
 EOF
