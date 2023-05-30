@@ -27,6 +27,7 @@ EOF
 
 function _boot() {
     _boots=$(cat <<'EOF'
+sudo mount -t efivarfs none /sys/firmware/efi/efivars:[Boot] - Mount efivars for UEFI
 sudo efibootmgr -c -d _bootdev_ -p _bootpart_ -L _bootname_ -l _bootloader_:[Boot] - Create entry for _bootloader_ named _bootname_ in dev _bootdev_ partition _bootpart_
 sudo efibootmgr -c -d _dev_ -p _bootpart_ -L _bootname_ -l _kernel_ -u '_cmdline_ initrd=\\_img_':[Boot] - Create entry for _kernel_ with _cmdline_ and image _img_ in _dev_ partition _bootpart_ with name _bootname_
 sudo ls -lanR /boot:[Boot] - List files in boot
