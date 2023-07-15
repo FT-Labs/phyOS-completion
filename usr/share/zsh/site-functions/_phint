@@ -232,7 +232,8 @@ sudo ip link set _dev_ up:[Status] - Set _dev_ up
 sudo ip link set _dev_ down:[Status] - Set _dev_ down
 sudo ip link set _dev_ promisc on:[Status] - Enable promiscius mode for _dev_
 _cmd_ | ssh _host_@_hostip_ sh -c "_outcmd_ > _destfile_":[ssh] - Use stdout redirection through ssh
-sudo ss -K dport =_port_:[Socket] - Kill processes using _port_ socket
+sudo ss -K dport =_port_:[Socket] - Kill processes using destination _port_ socket
+sudo ss -K sport =_port_:[Socket] - Kill processes using source (local) _port_ socket
 sudo ss -_option_:[Socket] - ss is used to dump _option_ socket statistics.
 sudo ss -N _nsname_:[Socket] - Switch to _nsname_ network namespace name.
 sudo ss -A _query_:[Socket] - query=all, inet, tcp, udp, raw, unix, packet, netlink, unix_dgram, unix_stream, unix_seqpacket, packet_raw, packet_dgram.
