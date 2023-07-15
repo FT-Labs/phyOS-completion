@@ -184,7 +184,7 @@ EOF
 function _net() {
     _net_s=$(cat <<'EOF'
 sudo iptables -L -n -v:[Firewall] - Check current status of firewall
-service iptables save:[Firewall] - Save all the ipv4 rules in /etc/sysconfig/iptables file
+sudo service iptables save:[Firewall] - Save all the ipv4 rules in /etc/sysconfig/iptables file
 sudo iptables-save > _file-path_:[Firewall] - To save all the iptables rules in a file
 sudo iptables-restore < _file_:[Firewall] - To restore the rules from _file_
 sudo iptables -A OUTPUT -p _protocol_ -d _ip_ -j DROP:[Firewall] - To block _protocol_ traffic to _ip_ or _ip_ range.
@@ -209,19 +209,19 @@ sudo iptables -l INPUT -d _ip_ -p _protocol_ -m multiport --dport _port-numbers,
 sudo iptables -A INPUT -m conntrack --cstate ESTABLISHED -j ACCEPT:[Firewall] - Allow established connections packets.
 sudo iptables -A INPUT -j LOG:[Firewall] - Enable logging in iptables
 sudo iptables -A INPUT -s _ip/*_ -j LOG:[Firewall] - Enable logging for source IP or subnet.
-sudo iptables -A INPUT -i _interface_ -j LOG --log-prefix "IPtables Rejected packets:":[Firewall] - Savings logs of rejected packets.
+sudo iptables -A INPUT -i _interface_ -j LOG --log-prefix "IPtables Rejected packets\:":[Firewall] - Savings logs of rejected packets.
 sudo iptables -A INPUT -s _ip/*_ -j LOG --log-prefix '** SUSPECT **':[Firewall] - Enable logging for suspicious filtered packets.
 sudo iptables -t mangle -A PREPROUTING -p tcp --tcp-flags _flags,*_ -j DROP:[Firewall] - Block Packets with Bogus TCP Flags.
 sudo ip link set _dev_ address _XX-XX-XX-XX-XX-XX_:[MAC] - Change mac address of device _dev_ (_dev_ must be down)
-ip addr show:[ip] - Display all network information
-ip addr show dev _dev_:[ip] - Show network information for only _dev_
-ip link:[ip] - Display information for network interfaces
-ip -s link:[ip] - Show interface statistics
-ip maddr:[ip] - Display multicast information for all devices
-ip maddr show dev _dev_:[ip] - Display multicast information for device _dev_
-ip neigh:[ip] - Display neighbour objects
-ip neigh show dev _dev_:[ip] - Show the ARP cache for device _dev_
-ip link dev _dev_:[ip] - Display information for only _dev_
+sudo ip addr show:[ip] - Display all network information
+sudo ip addr show dev _dev_:[ip] - Show network information for only _dev_
+sudo ip link:[ip] - Display information for network interfaces
+sudo ip -s link:[ip] - Show interface statistics
+sudo ip maddr:[ip] - Display multicast information for all devices
+sudo ip maddr show dev _dev_:[ip] - Display multicast information for device _dev_
+sudo ip neigh:[ip] - Display neighbour objects
+sudo ip neigh show dev _dev_:[ip] - Show the ARP cache for device _dev_
+sudo ip link dev _dev_:[ip] - Display information for only _dev_
 sudo ip addr add _ipaddr/sm_ dev _dev_:[ip] - Add _ipaddr/sm_ with submask to _dev_
 sudo ip addr del _ipaddr/sm_ dev _dev_:[ip] - Delete _ipaddr/sm_ with submask to _dev_
 sudo ip link set _dev_ mtu _size_:[Packet] - Set largest frame or packet = _size_
@@ -232,15 +232,16 @@ sudo ip link set _dev_ up:[Status] - Set _dev_ up
 sudo ip link set _dev_ down:[Status] - Set _dev_ down
 sudo ip link set _dev_ promisc on:[Status] - Enable promiscius mode for _dev_
 _cmd_ | ssh _host_@_hostip_ sh -c "_outcmd_ > _destfile_":[ssh] - Use stdout redirection through ssh
-ss -_option_:[Socket] - ss is used to dump _option_ socket statistics.
-ss -N _nsname_:[Socket] - Switch to _nsname_ network namespace name.
-ss -A _query_:[Socket] - query=all, inet, tcp, udp, raw, unix, packet, netlink, unix_dgram, unix_stream, unix_seqpacket, packet_raw, packet_dgram.
-ss -D _file_:[Socket] - Do not display anything, just dump raw information about TCP sockets to FILE after applying filters. If _file_ is '-' stdout is used.
-ss -F _file:[Socket] - Read filter information from FILE. Each line of FILE is interpreted like single command line option. If FILE is - stdin is used.
-ss -at '( dport = \:_port_ or sport = \:_port_ )':[Socket] - Filter connections by port number or port name
-ss dst _ip_:[Socket] - Show connected sockets from specific address, address range and specified port number
-ss -f _family_:[Socket] - Option to specify the connection family. It will only display the information of specified family. The supported families are: unix, inet, inet6, link, netlink.
-ss -o state _state-filter_:[Socket] - STATE-FILTER allows to construct arbitrary set of states to match.
+sudo ss -K dport =_port_:[Socket] - Kill processes using _port_ socket
+sudo ss -_option_:[Socket] - ss is used to dump _option_ socket statistics.
+sudo ss -N _nsname_:[Socket] - Switch to _nsname_ network namespace name.
+sudo ss -A _query_:[Socket] - query=all, inet, tcp, udp, raw, unix, packet, netlink, unix_dgram, unix_stream, unix_seqpacket, packet_raw, packet_dgram.
+sudo ss -D _file_:[Socket] - Do not display anything, just dump raw information about TCP sockets to FILE after applying filters. If _file_ is '-' stdout is used.
+sudo ss -F _file:[Socket] - Read filter information from FILE. Each line of FILE is interpreted like single command line option. If FILE is - stdin is used.
+sudo ss -at '( dport = \:_port_ or sport = \:_port_ )':[Socket] - Filter connections by port number or port name
+sudo ss dst _ip_:[Socket] - Show connected sockets from specific address, address range and specified port number
+sudo ss -f _family_:[Socket] - Option to specify the connection family. It will only display the information of specified family. The supported families are: unix, inet, inet6, link, netlink.
+sudo ss -o state _state-filter_:[Socket] - STATE-FILTER allows to construct arbitrary set of states to match.
 sudo iw dev wlan0 scan | grep -Po '(?<=SSID\\: ).*':[Wifi] - Scan networks without network manager
 wpa_passphrase _essid_ _pass_ | sudo tee /etc/wpa_supplicant.conf:[Wifi] - Create wpa supplicant conf on _essid_ with password _pass_
 sudo wpa_supplicant -c /etc/wpa_supplicant.conf -i _iface:[Wifi] - Launch wpa supplicant on _iface_
