@@ -133,6 +133,7 @@ ls -D /proc/[0-9]*/{status,oom_score_adj} | sort --field-separator=/ --numeric-s
 sudo slabtop -o:[Memory] - Show slab table once and exit
 swapon --bytes --show:[Memory] - Show swap usage in bytes
 lsmem -a -o RANGE,SIZE,STATE,REMOVABLE,ZONES,NODE,BLOCK:[Memory] - Show detailed memory table
+sudo pmap $(pidof -s _process_) | tail -n 1 | awk '/[0-9]K/{print $2}':[Memory] - Get ram usage of a process in kilobytes
 sudo grep -H '' /sys/module/_module_*/parameters/*:[Module] - Get module parameter information
 EOF
 )
