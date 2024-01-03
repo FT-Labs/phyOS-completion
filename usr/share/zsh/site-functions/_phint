@@ -330,6 +330,26 @@ EOF
     return 0
 }
 
+function _openstack() {
+    _openstackcmd=$(cat <<'EOF'
+openstack server list:[Compute (Nova)] - List instances, check status
+openstack image list:[Compute (Nova)] - List all images
+openstack flavor create --ram _ram_ --disk _diskcnt_ --vcpus _cpucnt_ _flavor_:[Compute (Nova)] - Create _flavor_ with _ram_ mb memory, _cpucnt_ vcpu, _diskcnt_ disks
+openstack flavor list:[Compute (Nova)] - List all flavors
+openstack server create --image _image_ --flavor _flavor_ _name_:[Compute (Nova)] - Boot an instance with _image_, _flavor_ as _name_ instance
+openstack user list:[Identity (Keystone)] - List all users
+openstack catalog list:[Identity (Keystone)] - List identity service catalog
+openstack image list:[Image (Glance)] - List accessible images
+openstack image delete _image_:[Image (Glance)] - Delete _image_
+openstack image show _image_:[Image (Glance)] - Describe a specific _image_
+openstack image set _image_:[Image (Glance)] - Update _image_
+openstack image create "_name_" --disk-format _fmt_ --public --file _kernelimg_:[Image (Glance)] - Upload kernel image named _name_, format _fmt_, image _kernelimg_
+openstack image create "_name_" --disk-format _fmt_ --container-format _cfmt_ --public --file _initrd_:[Image (Glance)] - Upload ram image named _name_, disk format _fmt_, container format _cfmt_, initrd _initrd_
+
+EOF
+)
+}
+
 
 _arguments -C \
     "1: :->cmds" \
