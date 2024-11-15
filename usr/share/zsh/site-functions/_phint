@@ -189,6 +189,7 @@ sudo service iptables save:[Firewall] - Save all the ipv4 rules in /etc/sysconfi
 sudo iptables-save > _file-path_:[Firewall] - To save all the iptables rules in a file
 sudo iptables-restore < _file_:[Firewall] - To restore the rules from _file_
 sudo iptables -A OUTPUT -p _protocol_ -d _ip_ -j DROP:[Firewall] - To block _protocol_ traffic to _ip_ or _ip_ range.
+sudo iptable -I INPUT -p tcp _port_ -j REJECT --reject-with-tcp-reset:[Firewall] - To reject tcp traffic on _port_ with tcp reset
 sudo iptables -A OUTPUT -p _protocol_ -d _ipaddr/sm_ --dport _port_ -j ACCEPT:[Firewall] - To allow outbound traffic to _ipaddr/sm_ on _port_
 sudo iptables -A INPUT -p _protocol_ -i _interface_ -j DROP:[Firewall] - To block incoming protocol requests on _interface_
 sudo iptables -A INPUT -m mac --mac-source _mac_ -j DROP:[Firewall] - To drop inbound traffic to specific _mac_ address.
@@ -214,8 +215,7 @@ sudo iptables -A INPUT -i _interface_ -j LOG --log-prefix "IPtables Rejected pac
 sudo iptables -A INPUT -s _ip/*_ -j LOG --log-prefix '** SUSPECT **':[Firewall] - Enable logging for suspicious filtered packets.
 sudo iptables -t mangle -A PREPROUTING -p tcp --tcp-flags _flags,*_ -j DROP:[Firewall] - Block Packets with Bogus TCP Flags.
 sudo ip link set _dev_ address _XX-XX-XX-XX-XX-XX_:[MAC] - Change mac address of device _dev_ (_dev_ must be down)
-sudo ip addr show:[ip] - Display all network information
-sudo ip addr show dev _dev_:[ip] - Show network information for only _dev_
+sudo ip addr show:[ip] - Display all network information sudo ip addr show dev _dev_:[ip] - Show network information for only _dev_
 sudo ip link:[ip] - Display information for network interfaces
 sudo ip -s link:[ip] - Show interface statistics
 sudo ip maddr:[ip] - Display multicast information for all devices
@@ -279,6 +279,8 @@ sudo lsusb:[Usb] - Get usb device information
 sudo lsusb -t:[Usb] - Get usb device information with tree view
 sudo lsusb -v:[Usb] - Usb device information verbose
 sudo lsusb -v | grep -E ' Device [0-9]|MaxPower':[Usb] - Get power consumption of usb devices
+growisofs -use-the-force-luke=spare:none -dvd-compat -overburn -Z _/dev/sr0_=_path-to-iso_:[DVD] - Burn iso to dvd
+dvd+rw-mediainfo _dev_:[DVD] - Get dvd media information
 EOF
 )
 
