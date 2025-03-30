@@ -315,6 +315,7 @@ sudo groupadd -g _id_ _name_:[Group] - Create new group with _name_ with _id_
 sudo groupdel -f _name_:[Group] - Force delete _name_ group
 sudo groupmod _old_ -n _new_:[Group] - Change _old_ group name to _new_
 groups _user_:[Group] - List groups of _user_
+exec su -l _user_:[Group] - Force update group state of _user_ without the need to logout and login
 sudo chown _user_\:_group_ _target_:[Permission] - Change owner of _target_ to _user_ and group to _group_
 sudo chown -hR _user_ _path_:[Permission] - Recursively change file ownerships to _user_ in _path_ (Change symlink ownership, dont follow)
 sudo chown -hr _user_ _path_:[Permission] - Recursively change file ownerships to _user_ in _path_ (Follow symlink and change ownership of all)
